@@ -1,0 +1,184 @@
+<!DOCTYPE html>
+<html lang="vi">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Todo App - Quản lý công việc</title>
+    <meta name="description" content="Ứng dụng quản lý công việc theo lịch">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="style.css">
+</head>
+
+<body>
+    <div class="app-container">
+        <!-- Header -->
+        <header class="header">
+            <div class="header-content">
+                <div class="logo">
+                    <span class="logo-icon">📅</span>
+                    <h1>Todo Calendar</h1>
+                </div>
+            </div>
+            <!-- User Info -->
+            <div id="userInfo" class="user-info">
+                <span class="user-greeting">Xin chào, <strong id="usernameDisplay"></strong></span>
+                <button id="logoutBtn" class="btn btn-logout">Đăng xuất</button>
+            </div>
+        </header>
+
+        <!-- Main Content -->
+        <main class="main-content">
+            <!-- Calendar Navigation -->
+            <section class="calendar-nav">
+                <div class="nav-controls">
+                    <button id="prevBtn" class="nav-btn">◀</button>
+                    <h2 id="currentPeriod" class="period-title">Tháng 1, 2026</h2>
+                    <button id="nextBtn" class="nav-btn">▶</button>
+                    <button id="todayBtn" class="btn btn-secondary btn-today">Hôm nay</button>
+                </div>
+                <div class="view-tabs">
+                    <button class="view-tab" data-view="day">Ngày</button>
+                    <button class="view-tab" data-view="week">Tuần</button>
+                    <button class="view-tab active" data-view="month">Tháng</button>
+                    <button class="view-tab" data-view="list">Danh sách</button>
+                </div>
+            </section>
+
+            <!-- Add Todo Button -->
+            <button id="addTodoBtn" class="btn btn-primary btn-add-todo">
+                <span class="btn-icon">+</span>
+                <span class="btn-text">Thêm công việc</span>
+            </button>
+
+            <!-- Calendar View -->
+            <section id="calendarView" class="calendar-section">
+                <!-- Month View -->
+                <div id="monthView" class="month-view">
+                    <div class="weekday-header">
+                        <span>CN</span><span>T2</span><span>T3</span><span>T4</span><span>T5</span><span>T6</span><span>T7</span>
+                    </div>
+                    <div id="calendarGrid" class="calendar-grid">
+                        <!-- Days will be rendered here -->
+                    </div>
+                </div>
+
+                <!-- Day View -->
+                <div id="dayView" class="day-view hidden">
+                    <div id="dayTodoList" class="todo-list">
+                        <!-- Day todos will be rendered here -->
+                    </div>
+                </div>
+
+                <!-- Week View -->
+                <div id="weekView" class="week-view hidden">
+                    <div id="weekGrid" class="week-grid">
+                        <!-- Week will be rendered here -->
+                    </div>
+                </div>
+
+                <!-- List View -->
+                <div id="listView" class="list-view hidden">
+                    <div class="filter-tabs">
+                        <button class="filter-tab active" data-filter="all">Tất cả</button>
+                        <button class="filter-tab" data-filter="overdue">Quá hạn</button>
+                        <button class="filter-tab" data-filter="today">Hôm nay</button>
+                        <button class="filter-tab" data-filter="upcoming">Sắp tới</button>
+                        <button class="filter-tab" data-filter="no-date">Chưa đặt ngày</button>
+                    </div>
+                    <div id="listTodoList" class="todo-list">
+                        <!-- List todos will be rendered here -->
+                    </div>
+                </div>
+            </section>
+
+            <!-- Selected Day Todos (shows when clicking a day) -->
+            <section id="selectedDaySection" class="selected-day-section hidden">
+                <div class="selected-day-header">
+                    <h3 id="selectedDayTitle">Ngày 1 Tháng 1, 2026</h3>
+                    <button id="closeSelectedDay" class="btn-close">×</button>
+                </div>
+                <div id="selectedDayTodos" class="todo-list">
+                    <!-- Selected day todos -->
+                </div>
+            </section>
+
+            <!-- Empty State -->
+            <div id="emptyState" class="empty-state hidden">
+                <div class="empty-icon">📝</div>
+                <h3>Không có công việc</h3>
+                <p>Nhấn nút + để thêm công việc mới</p>
+            </div>
+
+            <!-- Loading State -->
+            <div id="loadingState" class="loading-state hidden">
+                <div class="spinner"></div>
+                <p>Đang tải...</p>
+            </div>
+        </main>
+
+        <!-- Add/Edit Todo Modal -->
+        <div id="todoModal" class="modal hidden">
+            <div class="modal-overlay"></div>
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h2 id="modalTitle">Thêm công việc</h2>
+                    <button class="modal-close" id="closeModal">&times;</button>
+                </div>
+                <form id="todoForm" class="modal-form">
+                    <input type="hidden" id="todoId">
+                    <div class="form-group">
+                        <label for="todoTitle">Tiêu đề *</label>
+                        <input type="text" id="todoTitle" required maxlength="200" placeholder="Nhập tiêu đề công việc">
+                    </div>
+                    <div class="form-group">
+                        <label for="todoDescription">Mô tả</label>
+                        <textarea id="todoDescription" maxlength="1000" rows="2"
+                            placeholder="Mô tả chi tiết (tùy chọn)"></textarea>
+                    </div>
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label for="todoDueDate">Ngày hạn</label>
+                            <input type="date" id="todoDueDate">
+                        </div>
+                        <div class="form-group">
+                            <label for="todoDueTime">Giờ</label>
+                            <input type="time" id="todoDueTime">
+                        </div>
+                    </div>
+                    <div class="form-group">
+                        <label for="todoPriority">Độ ưu tiên</label>
+                        <select id="todoPriority">
+                            <option value="LOW">Thấp</option>
+                            <option value="MEDIUM" selected>Trung bình</option>
+                            <option value="HIGH">Cao</option>
+                        </select>
+                    </div>
+                    <div class="form-group checkbox-group" id="completedGroup" style="display:none;">
+                        <label class="checkbox-label">
+                            <input type="checkbox" id="todoCompleted">
+                            <span class="checkmark"></span>
+                            <span>Đã hoàn thành</span>
+                        </label>
+                    </div>
+                    <div class="modal-actions">
+                        <button type="button" class="btn btn-secondary" id="cancelTodo">Hủy</button>
+                        <button type="submit" class="btn btn-primary" id="saveTodoBtn">Lưu</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+
+        <!-- Toast Notification -->
+        <div id="toast" class="toast hidden">
+            <span class="toast-message"></span>
+        </div>
+    </div>
+
+    <script src="auth.js"></script>
+    <script src="app.js"></script>
+</body>
+
+</html>
