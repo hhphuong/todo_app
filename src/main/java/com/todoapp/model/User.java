@@ -8,6 +8,7 @@ import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
+import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
@@ -38,8 +39,25 @@ public class User {
     @Column(nullable = false)
     private String password;
 
+    // Streak tracking
+    @Column(name = "current_streak")
+    private Integer currentStreak = 0;
+
+    @Column(name = "longest_streak")
+    private Integer longestStreak = 0;
+
+    @Column(name = "last_active_date")
+    private LocalDate lastActiveDate;
+
+    // Theme preference
+    @Column(name = "theme")
+    private String theme = "dark";
+
     @OneToMany(mappedBy = "user", cascade = CascadeType.ALL, orphanRemoval = true)
     private List<Todo> todos = new ArrayList<>();
+
+    @OneToMany(mappedBy = "user", cascade = CascadeType.ALL, orphanRemoval = true)
+    private List<Tag> tags = new ArrayList<>();
 
     @Column(name = "created_at", nullable = false, updatable = false)
     private LocalDateTime createdAt;
@@ -47,5 +65,6 @@ public class User {
     @PrePersist
     protected void onCreate() {
         createdAt = LocalDateTime.now();
+        lastActiveDate = LocalDate.now();
     }
 }

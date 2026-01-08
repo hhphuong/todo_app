@@ -83,6 +83,26 @@ public class TodoController {
         return ResponseEntity.ok(todoService.getTodosByStatusForUser(completed, user));
     }
 
+    // Reorder endpoint (for drag-drop)
+    @PutMapping("/reorder")
+    public ResponseEntity<Void> reorderTodos(@RequestBody List<Long> todoIds, Authentication authentication) {
+        User user = getCurrentUser(authentication);
+        todoService.reorderTodos(todoIds, user);
+        return ResponseEntity.ok().build();
+    }
+
+    // Update due date (for drag to different day)
+    @PatchMapping("/{id}/due-date")
+    public ResponseEntity<Todo> updateDueDate(
+            @PathVariable Long id,
+            @RequestParam @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate dueDate,
+            Authentication authentication) {
+        User user = getCurrentUser(authentication);
+        return todoService.updateDueDate(id, dueDate, user)
+                .map(ResponseEntity::ok)
+                .orElse(ResponseEntity.notFound().build());
+    }
+
     // Calendar endpoints
     @GetMapping("/date/{date}")
     public ResponseEntity<List<Todo>> getTodosByDate(
@@ -125,6 +145,12 @@ public class TodoController {
         return ResponseEntity.ok(todoService.getTodosWithoutDueDate(user));
     }
 
+    @GetMapping("/tag/{tagId}")
+    public ResponseEntity<List<Todo>> getTodosByTag(@PathVariable Long tagId, Authentication authentication) {
+        User user = getCurrentUser(authentication);
+        return ResponseEntity.ok(todoService.getTodosByTag(user, tagId));
+    }
+
     @GetMapping("/calendar-counts")
     public ResponseEntity<Map<LocalDate, Long>> getCalendarCounts(
             @RequestParam int year,
@@ -135,5 +161,14 @@ public class TodoController {
         LocalDate startDate = yearMonth.atDay(1);
         LocalDate endDate = yearMonth.atEndOfMonth();
         return ResponseEntity.ok(todoService.getTodoCountByDateRange(user, startDate, endDate));
+    }
+
+    // Statistics endpoint
+    @GetMapping("/statistics")
+    public ResponseEntity<Map<String, Object>> getStatistics(
+            @RequestParam(defaultValue = "30") int days,
+            Authentication authentication) {
+        User user = getCurrentUser(authentication);
+        return ResponseEntity.ok(todoService.getStatistics(user, days));
     }
 }

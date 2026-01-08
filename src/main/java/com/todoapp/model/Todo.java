@@ -11,6 +11,10 @@ import lombok.NoArgsConstructor;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.LocalTime;
+import java.util.ArrayList;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Set;
 
 @Entity
 @Table(name = "todos")
@@ -45,6 +49,28 @@ public class Todo {
     @Column(name = "priority")
     private Priority priority = Priority.MEDIUM;
 
+    // Display order for drag-drop
+    @Column(name = "display_order")
+    private Integer displayOrder = 0;
+
+    // Parent-child relationship for subtasks
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "parent_id")
+    @JsonIgnore
+    private Todo parent;
+
+    @OneToMany(mappedBy = "parent", cascade = CascadeType.ALL, orphanRemoval = true)
+    private List<Todo> subtasks = new ArrayList<>();
+
+    // Tags relationship
+    @ManyToMany(fetch = FetchType.EAGER)
+    @JoinTable(
+            name = "todo_tags",
+            joinColumns = @JoinColumn(name = "todo_id"),
+            inverseJoinColumns = @JoinColumn(name = "tag_id")
+    )
+    private Set<Tag> tags = new HashSet<>();
+
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "user_id")
     @JsonIgnore
@@ -55,6 +81,12 @@ public class Todo {
 
     @Column(name = "updated_at")
     private LocalDateTime updatedAt;
+
+    @Transient
+    private Long parentId;
+
+    @Transient
+    private List<Long> tagIds;
 
     @PrePersist
     protected void onCreate() {
@@ -80,5 +112,23 @@ public class Todo {
             return dueTime.isBefore(LocalTime.now());
         }
         return false;
+    }
+
+    // Helper to get parentId for JSON
+    public Long getParentId() {
+        return parent != null ? parent.getId() : parentId;
+    }
+
+    // Calculate subtask progress
+    public int getSubtaskProgress() {
+        if (subtasks == null || subtasks.isEmpty()) {
+            return 0;
+        }
+        long completedCount = subtasks.stream().filter(Todo::isCompleted).count();
+        return (int) ((completedCount * 100) / subtasks.size());
+    }
+
+    public boolean hasSubtasks() {
+        return subtasks != null && !subtasks.isEmpty();
     }
 }
