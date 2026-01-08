@@ -4,7 +4,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Đăng nhập - Todo App</title>
+    <title>Đăng nhập - Todo Pro</title>
     <meta name="description" content="Đăng nhập vào ứng dụng quản lý công việc">
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -12,16 +12,15 @@
     <link rel="stylesheet" href="style.css">
 </head>
 
-<body>
+<body class="dark-theme">
     <div class="app-container auth-container">
         <!-- Header -->
         <header class="header">
             <div class="header-content">
                 <div class="logo">
-                    <span class="logo-icon">✓</span>
-                    <h1>Todo App</h1>
+                    <span class="logo-icon">📅</span>
+                    <h1>Todo Pro</h1>
                 </div>
-                <p class="tagline">Đăng nhập để tiếp tục</p>
             </div>
         </header>
 
@@ -62,8 +61,19 @@
         </div>
     </div>
 
-    <script src="auth.js"></script>
     <script>
+        // Load theme preference
+        const theme = localStorage.getItem('theme') || 'dark';
+        document.body.className = theme + '-theme';
+
+        // Toast function
+        function showToast(message, type = 'success') {
+            const toast = document.getElementById('toast');
+            toast.querySelector('.toast-message').textContent = message;
+            toast.className = `toast ${type} show`;
+            setTimeout(() => toast.classList.remove('show'), 3000);
+        }
+
         document.getElementById('loginForm').addEventListener('submit', async (e) => {
             e.preventDefault();
             const username = document.getElementById('username').value.trim();

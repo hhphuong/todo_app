@@ -564,7 +564,7 @@ async function showDayTodos(dateStr) {
     let todos = await fetchDayTodos(dateStr);
     todos = filterTodosByTag(todos);
 
-    const date = new Date(dateStr);
+    const date = parseLocalDate(dateStr);
     document.getElementById('selectedDayTitle').textContent = date.toLocaleDateString('vi-VN', {
         weekday: 'long',
         day: 'numeric',
@@ -602,7 +602,7 @@ function createTodoHTML(todo, compact = false) {
     const completedClass = todo.completed ? 'completed' : '';
 
     const dueInfo = todo.dueDate
-        ? `${formatDate(new Date(todo.dueDate))}${todo.dueTime ? ' ' + todo.dueTime.substring(0, 5) : ''}`
+        ? `${formatDate(parseLocalDate(todo.dueDate))}${todo.dueTime ? ' ' + todo.dueTime.substring(0, 5) : ''}`
         : '';
 
     const tagsHtml = (todo.tags || []).map(tag =>
@@ -1070,15 +1070,27 @@ async function deleteTag(id) {
 // Helper Functions
 // ============================================
 function formatDateISO(date) {
-    return date.toISOString().split('T')[0];
+    // Use local timezone, not UTC
+    const year = date.getFullYear();
+    const month = String(date.getMonth() + 1).padStart(2, '0');
+    const day = String(date.getDate()).padStart(2, '0');
+    return `${year}-${month}-${day}`;
 }
 
 function formatDate(date) {
     return date.toLocaleDateString('vi-VN', { day: '2-digit', month: '2-digit' });
 }
 
+function parseLocalDate(dateStr) {
+    // Parse YYYY-MM-DD as local date (not UTC)
+    if (!dateStr) return null;
+    const [year, month, day] = dateStr.split('-').map(Number);
+    return new Date(year, month - 1, day);
+}
+
 function getStartOfWeek(date) {
     const d = new Date(date);
+    d.setHours(0, 0, 0, 0);
     const day = d.getDay();
     d.setDate(d.getDate() - day);
     return d;
@@ -1086,7 +1098,7 @@ function getStartOfWeek(date) {
 
 function isOverdue(todo) {
     if (!todo.dueDate || todo.completed) return false;
-    const dueDate = new Date(todo.dueDate);
+    const dueDate = parseLocalDate(todo.dueDate);
     const today = new Date();
     today.setHours(0, 0, 0, 0);
     return dueDate < today;
