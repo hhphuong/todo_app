@@ -4,26 +4,32 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Todo App - Quản lý công việc</title>
-    <meta name="description" content="Ứng dụng quản lý công việc theo lịch">
+    <title>Todo Pro - Quản lý công việc thông minh</title>
+    <meta name="description" content="Ứng dụng quản lý công việc theo lịch với tags, subtasks và thống kê">
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="style.css">
 </head>
 
-<body>
+<body class="dark-theme">
     <div class="app-container">
         <!-- Header -->
         <header class="header">
             <div class="header-content">
                 <div class="logo">
                     <span class="logo-icon">📅</span>
-                    <h1>Todo Calendar</h1>
+                    <h1>Todo Pro</h1>
+                </div>
+                <div class="header-actions">
+                    <button id="themeToggle" class="btn-icon-only" title="Đổi giao diện (D)">🌙</button>
+                    <button id="statsBtn" class="btn-icon-only" title="Thống kê">📊</button>
                 </div>
             </div>
             <!-- User Info -->
             <div id="userInfo" class="user-info">
+                <div class="streak-badge" id="streakBadge" title="Chuỗi ngày hoàn thành">🔥 <span
+                        id="streakCount">0</span></div>
                 <span class="user-greeting">Xin chào, <strong id="usernameDisplay"></strong></span>
                 <button id="logoutBtn" class="btn btn-logout">Đăng xuất</button>
             </div>
@@ -34,9 +40,9 @@
             <!-- Calendar Navigation -->
             <section class="calendar-nav">
                 <div class="nav-controls">
-                    <button id="prevBtn" class="nav-btn">◀</button>
+                    <button id="prevBtn" class="nav-btn" title="Trước">◀</button>
                     <h2 id="currentPeriod" class="period-title">Tháng 1, 2026</h2>
-                    <button id="nextBtn" class="nav-btn">▶</button>
+                    <button id="nextBtn" class="nav-btn" title="Sau">▶</button>
                     <button id="todayBtn" class="btn btn-secondary btn-today">Hôm nay</button>
                 </div>
                 <div class="view-tabs">
@@ -47,8 +53,17 @@
                 </div>
             </section>
 
+            <!-- Tags Filter Bar -->
+            <section class="tags-bar" id="tagsBar">
+                <div class="tags-list" id="tagsList">
+                    <button class="tag-filter active" data-tag-id="all">Tất cả</button>
+                    <!-- Tags will be rendered here -->
+                </div>
+                <button id="manageTagsBtn" class="btn-icon-only" title="Quản lý nhãn">🏷️</button>
+            </section>
+
             <!-- Add Todo Button -->
-            <button id="addTodoBtn" class="btn btn-primary btn-add-todo">
+            <button id="addTodoBtn" class="btn btn-primary btn-add-todo" title="Thêm công việc (N)">
                 <span class="btn-icon">+</span>
                 <span class="btn-text">Thêm công việc</span>
             </button>
@@ -67,7 +82,7 @@
 
                 <!-- Day View -->
                 <div id="dayView" class="day-view hidden">
-                    <div id="dayTodoList" class="todo-list">
+                    <div id="dayTodoList" class="todo-list sortable-list">
                         <!-- Day todos will be rendered here -->
                     </div>
                 </div>
@@ -88,19 +103,19 @@
                         <button class="filter-tab" data-filter="upcoming">Sắp tới</button>
                         <button class="filter-tab" data-filter="no-date">Chưa đặt ngày</button>
                     </div>
-                    <div id="listTodoList" class="todo-list">
+                    <div id="listTodoList" class="todo-list sortable-list">
                         <!-- List todos will be rendered here -->
                     </div>
                 </div>
             </section>
 
-            <!-- Selected Day Todos (shows when clicking a day) -->
+            <!-- Selected Day Todos -->
             <section id="selectedDaySection" class="selected-day-section hidden">
                 <div class="selected-day-header">
                     <h3 id="selectedDayTitle">Ngày 1 Tháng 1, 2026</h3>
                     <button id="closeSelectedDay" class="btn-close">×</button>
                 </div>
-                <div id="selectedDayTodos" class="todo-list">
+                <div id="selectedDayTodos" class="todo-list sortable-list">
                     <!-- Selected day todos -->
                 </div>
             </section>
@@ -109,7 +124,7 @@
             <div id="emptyState" class="empty-state hidden">
                 <div class="empty-icon">📝</div>
                 <h3>Không có công việc</h3>
-                <p>Nhấn nút + để thêm công việc mới</p>
+                <p>Nhấn + hoặc phím N để thêm</p>
             </div>
 
             <!-- Loading State -->
@@ -129,6 +144,7 @@
                 </div>
                 <form id="todoForm" class="modal-form">
                     <input type="hidden" id="todoId">
+                    <input type="hidden" id="todoParentId">
                     <div class="form-group">
                         <label for="todoTitle">Tiêu đề *</label>
                         <input type="text" id="todoTitle" required maxlength="200" placeholder="Nhập tiêu đề công việc">
@@ -148,13 +164,21 @@
                             <input type="time" id="todoDueTime">
                         </div>
                     </div>
-                    <div class="form-group">
-                        <label for="todoPriority">Độ ưu tiên</label>
-                        <select id="todoPriority">
-                            <option value="LOW">Thấp</option>
-                            <option value="MEDIUM" selected>Trung bình</option>
-                            <option value="HIGH">Cao</option>
-                        </select>
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label for="todoPriority">Độ ưu tiên</label>
+                            <select id="todoPriority">
+                                <option value="LOW">🟢 Thấp</option>
+                                <option value="MEDIUM" selected>🟡 Trung bình</option>
+                                <option value="HIGH">🔴 Cao</option>
+                            </select>
+                        </div>
+                        <div class="form-group">
+                            <label>Nhãn</label>
+                            <div id="tagSelector" class="tag-selector">
+                                <!-- Tag checkboxes will be rendered here -->
+                            </div>
+                        </div>
                     </div>
                     <div class="form-group checkbox-group" id="completedGroup" style="display:none;">
                         <label class="checkbox-label">
@@ -164,16 +188,89 @@
                         </label>
                     </div>
                     <div class="modal-actions">
-                        <button type="button" class="btn btn-secondary" id="cancelTodo">Hủy</button>
-                        <button type="submit" class="btn btn-primary" id="saveTodoBtn">Lưu</button>
+                        <button type="button" class="btn btn-secondary" id="cancelTodo">Hủy (Esc)</button>
+                        <button type="submit" class="btn btn-primary" id="saveTodoBtn">Lưu (Enter)</button>
                     </div>
                 </form>
+            </div>
+        </div>
+
+        <!-- Quick Add Input (appears on double-click) -->
+        <div id="quickAddWrapper" class="quick-add-wrapper hidden">
+            <input type="text" id="quickAddInput" class="quick-add-input"
+                placeholder="Nhập tên công việc, Enter để lưu, Esc để hủy">
+        </div>
+
+        <!-- Tag Management Modal -->
+        <div id="tagModal" class="modal hidden">
+            <div class="modal-overlay"></div>
+            <div class="modal-content modal-sm">
+                <div class="modal-header">
+                    <h2>Quản lý nhãn</h2>
+                    <button class="modal-close" id="closeTagModal">&times;</button>
+                </div>
+                <div class="tag-manager">
+                    <div class="tag-add-form">
+                        <input type="text" id="newTagName" placeholder="Tên nhãn mới" maxlength="50">
+                        <input type="color" id="newTagColor" value="#667eea">
+                        <button type="button" id="addTagBtn" class="btn btn-primary btn-sm">+</button>
+                    </div>
+                    <div id="tagManagerList" class="tag-manager-list">
+                        <!-- Tags will be rendered here -->
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Statistics Modal -->
+        <div id="statsModal" class="modal hidden">
+            <div class="modal-overlay"></div>
+            <div class="modal-content modal-lg">
+                <div class="modal-header">
+                    <h2>📊 Thống kê năng suất</h2>
+                    <button class="modal-close" id="closeStatsModal">&times;</button>
+                </div>
+                <div class="stats-dashboard">
+                    <div class="stats-summary">
+                        <div class="stat-card">
+                            <div class="stat-value" id="statCompleted">0</div>
+                            <div class="stat-label">Hoàn thành (30 ngày)</div>
+                        </div>
+                        <div class="stat-card">
+                            <div class="stat-value" id="statStreak">🔥 0</div>
+                            <div class="stat-label">Chuỗi ngày</div>
+                        </div>
+                        <div class="stat-card">
+                            <div class="stat-value" id="statLongestStreak">0</div>
+                            <div class="stat-label">Kỷ lục chuỗi</div>
+                        </div>
+                    </div>
+                    <div class="chart-container">
+                        <h3>Hoàn thành theo ngày</h3>
+                        <div id="statsChart" class="stats-chart">
+                            <!-- Chart will be rendered here -->
+                        </div>
+                    </div>
+                </div>
             </div>
         </div>
 
         <!-- Toast Notification -->
         <div id="toast" class="toast hidden">
             <span class="toast-message"></span>
+        </div>
+
+        <!-- Keyboard Shortcuts Help -->
+        <div id="shortcutsHelp" class="shortcuts-help hidden">
+            <div class="shortcuts-content">
+                <h4>⌨️ Phím tắt</h4>
+                <ul>
+                    <li><kbd>N</kbd> Thêm mới</li>
+                    <li><kbd>D</kbd> Đổi theme</li>
+                    <li><kbd>Esc</kbd> Đóng/Hủy</li>
+                    <li><kbd>?</kbd> Hiện help</li>
+                </ul>
+            </div>
         </div>
     </div>
 

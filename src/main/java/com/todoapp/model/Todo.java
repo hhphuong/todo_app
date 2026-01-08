@@ -59,11 +59,12 @@ public class Todo {
     @JsonIgnore
     private Todo parent;
 
-    @OneToMany(mappedBy = "parent", cascade = CascadeType.ALL, orphanRemoval = true)
+    @OneToMany(mappedBy = "parent", cascade = CascadeType.ALL, orphanRemoval = true, fetch = FetchType.LAZY)
+    @JsonIgnore
     private List<Todo> subtasks = new ArrayList<>();
 
     // Tags relationship
-    @ManyToMany(fetch = FetchType.EAGER)
+    @ManyToMany(fetch = FetchType.LAZY)
     @JoinTable(
             name = "todo_tags",
             joinColumns = @JoinColumn(name = "todo_id"),

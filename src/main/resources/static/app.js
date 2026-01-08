@@ -985,7 +985,12 @@ async function createTodo(todoData) {
         headers: getHeaders(),
         body: JSON.stringify(todoData)
     });
-    if (!response.ok) throw new Error('Failed to create');
+    if (!response.ok) {
+        const errorData = await response.text();
+        console.error('Create todo error:', response.status, errorData);
+        showToast('Lỗi tạo todo: ' + (errorData || response.status), 'error');
+        throw new Error('Failed to create');
+    }
     showToast('Đã thêm công việc!', 'success');
     return await response.json();
 }
@@ -996,7 +1001,12 @@ async function updateTodo(id, todoData) {
         headers: getHeaders(),
         body: JSON.stringify(todoData)
     });
-    if (!response.ok) throw new Error('Failed to update');
+    if (!response.ok) {
+        const errorData = await response.text();
+        console.error('Update todo error:', response.status, errorData);
+        showToast('Lỗi cập nhật: ' + (errorData || response.status), 'error');
+        throw new Error('Failed to update');
+    }
     showToast('Đã cập nhật!', 'success');
     return await response.json();
 }
